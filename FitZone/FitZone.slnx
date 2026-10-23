@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="FitZone.API/FitZone.API.csproj" />
+  <Project Path="FitZone.Application/FitZone.Application.csproj" />
+  <Project Path="FitZone.Domain/FitZone.Domain.csproj" />
+  <Project Path="FitZone.Infrastructure/FitZone.Infrastructure.csproj" />
+</Solution>
