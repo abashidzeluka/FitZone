@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FitZone.Domain\FitZone.Domain.csproj" />
+    <ProjectReference Include="..\FitZone.Infrastructure\FitZone.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

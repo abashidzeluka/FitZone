@@ -14,7 +14,7 @@ namespace FitZone.Infrastructure.Configurations
                 .IsRequired();
 
             builder.HasOne(s => s.Trainer)
-                .WithMany()
+                .WithMany(s => s.TrainingSessions)
                 .HasForeignKey(s => s.TrainerId)
                 .OnDelete(DeleteBehavior.Restrict);
         }

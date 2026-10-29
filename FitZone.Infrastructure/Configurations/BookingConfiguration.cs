@@ -11,12 +11,12 @@ namespace FitZone.Infrastructure.Configurations
             builder.HasKey(b => b.Id);
 
             builder.HasOne(b => b.User)
-                .WithMany()
+                .WithMany(b => b.Bookings)
                 .HasForeignKey(b => b.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(b => b.TrainingSession)
-                .WithMany()
+                .WithMany(b => b.Bookings)
                 .HasForeignKey(b => b.TrainingSessionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
