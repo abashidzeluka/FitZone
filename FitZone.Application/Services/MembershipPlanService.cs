@@ -1,5 +1,6 @@
 ﻿using FitZone.Application.DTOs.MembershipPlans;
 using FitZone.Application.Interfaces;
+using FitZone.Domain.Entities;
 using FitZone.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -50,14 +51,42 @@ namespace FitZone.Application.Services
             };
         }
 
-        public Task<MembershipPlanDto> CreateAsync(CreateMembershipPlanDto dto)
+        public async Task<MembershipPlanDto> CreateAsync(CreateMembershipPlanDto dto)
         {
-            throw new NotImplementedException();
+            var plan = new MembershipPlan
+            {
+                Name = dto.Name,
+                VisitLimit = dto.VisitLimit,
+                Price = dto.Price,
+                DurationDays = dto.DurationDays
+            };
+
+            _context.MembershipPlans.Add(plan);
+            await _context.SaveChangesAsync();
+
+            return new MembershipPlanDto
+            {
+                Id = plan.Id,
+                Name = plan.Name,
+                VisitLimit = plan.VisitLimit,
+                Price = plan.Price,
+                DurationDays = plan.DurationDays
+            };
         }
 
-        public Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var plan = await _context.MembershipPlans.FindAsync(id);
+
+            if(plan == null)
+            {
+                return false;
+            }
+
+            _context.MembershipPlans.Remove(plan);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }
