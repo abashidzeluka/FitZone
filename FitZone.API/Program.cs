@@ -17,6 +17,7 @@ namespace FitZone.API
 
             builder.Services.AddScoped<IMembershipPlanService, MembershipPlanService>();
             builder.Services.AddScoped<IMemberService, MemberService>();
+            builder.Services.AddScoped<IUserMembershipService, UserMembershipService>();
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
