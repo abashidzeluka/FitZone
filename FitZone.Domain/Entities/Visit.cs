@@ -8,7 +8,7 @@ namespace FitZone.Domain.Entities
         public int UserId { get; set; }
         public int MembershipId { get; set; }
         public DateTime CheckedInAt { get; set; }
-        public User User { get; set; } = null!;
+        public ApplicationUser User { get; set; } = null!;
         public UserMembership UserMembership { get; set; } = null!;
     }
 }

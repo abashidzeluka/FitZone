@@ -10,7 +10,7 @@ namespace FitZone.Domain.Entities
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public int? RemainingVisits { get; set; }
-        public User User { get; set; } = null!;
+        public ApplicationUser User { get; set; } = null!;
         public MembershipPlan MembershipPlan { get; set; } = null!;
     }
 }

@@ -26,9 +26,9 @@ namespace FitZone.Application.Services
             return users.Select(u => new MemberDto
             {
                 Id = u.Id,
-                UserName = u.UserName,
-                Email = u.Email,
-                Role = u.Role.ToString()
+                UserName = u.UserName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                Role = "Member"
             });
         }
 
@@ -36,7 +36,7 @@ namespace FitZone.Application.Services
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
-            if(user == null)
+            if (user == null)
             {
                 return null;
             }
@@ -44,30 +44,28 @@ namespace FitZone.Application.Services
             return new MemberDto
             {
                 Id = user.Id,
-                UserName = user.UserName,
-                Email = user.Email,
-                Role = user.Role.ToString()
+                UserName = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Role = "Member"
             };
         }
         public async Task<MemberDto> CreateAsync(CreateMemberDto dto)
         {
-            var user = new User
+            var user = new ApplicationUser
             {
                 UserName = dto.UserName,
-                Email = dto.Email,
-                PasswordHash = dto.Password,
-                Role = Role.User
+                Email = dto.Email
             };
 
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-            
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
             return new MemberDto
             {
                 Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
-                Role = user.Role.ToString()
+                Role = "Member"
             };
         }
 
@@ -75,7 +73,7 @@ namespace FitZone.Application.Services
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
-            if(user == null)
+            if (user == null)
             {
                 return false;
             }

@@ -4,27 +4,16 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FitZone.Infrastructure.Configurations;
 
-public class UserConfiguration : IEntityTypeConfiguration<User>
+public class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
 {
-    public void Configure(EntityTypeBuilder<User> builder)
+    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
-        builder.HasKey(n => n.Id);
-
-        builder.Property(n => n.UserName)
+        builder.Property(u => u.FirstName)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(50);
 
-        builder.Property(n => n.Email)
+        builder.Property(u => u.LastName)
             .IsRequired()
-            .HasMaxLength(150);
-
-        builder.Property(n => n.PasswordHash)
-            .IsRequired();
-
-        builder.HasIndex(n => n.Email)
-            .IsUnique();
-
-        builder.HasIndex(n => n.UserName)
-            .IsUnique();
+            .HasMaxLength(50);
     }
 }

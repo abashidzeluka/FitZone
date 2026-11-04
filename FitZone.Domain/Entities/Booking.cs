@@ -7,7 +7,7 @@ namespace FitZone.Domain.Entities
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; } = null!;
+        public ApplicationUser User { get; set; } = null!;
         public int TrainingSessionId { get; set; }
         public TrainingSession TrainingSession { get; set; } = null!;
         public BookingStatus Status { get; set; }

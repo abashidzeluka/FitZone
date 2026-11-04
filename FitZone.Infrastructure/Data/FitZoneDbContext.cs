@@ -1,16 +1,17 @@
 ﻿using FitZone.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitZone.Infrastructure.Data;
 
-public class FitZoneDbContext : DbContext
+public class FitZoneDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
 {
     public FitZoneDbContext(DbContextOptions<FitZoneDbContext> options)
         : base(options)
     {
     }
 
-    public DbSet<User> Users => Set<User>();
     public DbSet<Trainer> Trainers => Set<Trainer>();
     public DbSet<MembershipPlan> MembershipPlans => Set<MembershipPlan>();
     public DbSet<UserMembership> UserMemberships => Set<UserMembership>();
