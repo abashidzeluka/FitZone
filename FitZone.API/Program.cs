@@ -19,7 +19,6 @@ namespace FitZone.API
             builder.Services.AddDbContext<FitZoneDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // 1. ჯერ Identity
             builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -32,7 +31,6 @@ namespace FitZone.API
             .AddEntityFrameworkStores<FitZoneDbContext>()
             .AddDefaultTokenProviders();
 
-            // 2. შემდეგ JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["Secret"]!;
 
