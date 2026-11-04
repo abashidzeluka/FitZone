@@ -122,6 +122,26 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<bool> RemoveRoleAsync(RemoveRoleDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
+
+        var roleName = dto.Role.ToString();
+
+        var isInRole = await _userManager.IsInRoleAsync(user, roleName);
+        if (!isInRole)
+        {
+            throw new InvalidOperationException($"User does not have the '{roleName}' role assigned.");
+        }
+
+        var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+        return result.Succeeded;
+    }
+
     private string GenerateJwtToken(ApplicationUser user, IList<string> roles)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
