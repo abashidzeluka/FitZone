@@ -6,7 +6,9 @@ namespace FitZone.Domain.Enums
 {
     public enum Role
     {
-        User,
-        Admin
+        Member,
+        Trainer,
+        Admin,
+        superAdmin
     }
 }

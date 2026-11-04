@@ -96,6 +96,32 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<bool> AssignRoleAsync(AssignRoleDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(dto.UserId.ToString());
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {dto.UserId} not found.");
+        }
+
+        var roleName = dto.Role.ToString();
+
+        var isInRole = await _userManager.IsInRoleAsync(user, roleName);
+        if (isInRole)
+        {
+            return true;
+        }
+
+        var result = await _userManager.AddToRoleAsync(user, roleName);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to assign role: {errors}");
+        }
+
+        return true;
+    }
+
     private string GenerateJwtToken(ApplicationUser user, IList<string> roles)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");

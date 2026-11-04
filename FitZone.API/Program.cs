@@ -13,7 +13,7 @@ namespace FitZone.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -59,7 +59,11 @@ namespace FitZone.API
             builder.Services.AddScoped<IUserMembershipService, UserMembershipService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+            {
+            options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
             builder.Services.AddOpenApi();
 
             builder.Services.AddEndpointsApiExplorer();
@@ -89,6 +93,45 @@ namespace FitZone.API
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+                var roles = Enum.GetNames<FitZone.Domain.Enums.Role>();
+                foreach (var role in roles)
+                {
+                    if (!await roleManager.RoleExistsAsync(role))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole<int>(role));
+                    }
+                }
+
+                const string superAdminEmail = "superadmin@fitzone.ge";
+                const string superAdminUsername = "superadmin";
+
+                var existingSuperAdmin = await userManager.FindByEmailAsync(superAdminEmail);
+                if (existingSuperAdmin == null)
+                {
+                    var superAdmin = new ApplicationUser
+                    {
+                        UserName = superAdminUsername,
+                        Email = superAdminEmail,
+                        FirstName = "Super",
+                        LastName = "Admin",
+                        DateOfBirth = new DateTime(2000, 1, 1),
+                        EmailConfirmed = true
+                    };
+
+                    var createResult = await userManager.CreateAsync(superAdmin, "Admin123");
+
+                    if (createResult.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(superAdmin, nameof(FitZone.Domain.Enums.Role.superAdmin));
+                    }
+                }
+            }
+
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -103,7 +146,7 @@ namespace FitZone.API
 
             app.MapControllers();
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
