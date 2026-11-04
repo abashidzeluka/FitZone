@@ -98,8 +98,8 @@ namespace FitZone.API
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-                var roles = Enum.GetNames<FitZone.Domain.Enums.Role>();
-                foreach (var role in roles)
+                var roleNames = Enum.GetNames<FitZone.Domain.Enums.Role>();
+                foreach (var role in roleNames)
                 {
                     if (!await roleManager.RoleExistsAsync(role))
                     {
@@ -109,11 +109,14 @@ namespace FitZone.API
 
                 const string superAdminEmail = "superadmin@fitzone.ge";
                 const string superAdminUsername = "superadmin";
+                var targetRole = FitZone.Domain.Enums.Role.superAdmin.ToString();
 
-                var existingSuperAdmin = await userManager.FindByEmailAsync(superAdminEmail);
-                if (existingSuperAdmin == null)
+                var superAdmin = await userManager.FindByNameAsync(superAdminUsername)
+                                 ?? await userManager.FindByEmailAsync(superAdminEmail);
+
+                if (superAdmin == null)
                 {
-                    var superAdmin = new ApplicationUser
+                    superAdmin = new ApplicationUser
                     {
                         UserName = superAdminUsername,
                         Email = superAdminEmail,
@@ -124,11 +127,24 @@ namespace FitZone.API
                     };
 
                     var createResult = await userManager.CreateAsync(superAdmin, "Admin123");
-
-                    if (createResult.Succeeded)
+                    if (!createResult.Succeeded)
                     {
-                        await userManager.AddToRoleAsync(superAdmin, nameof(FitZone.Domain.Enums.Role.superAdmin));
+                        var errs = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                        throw new InvalidOperationException($"Failed to create superadmin: {errs}");
                     }
+                }
+
+                var currentRoles = await userManager.GetRolesAsync(superAdmin);
+                if (currentRoles.Any())
+                {
+                    await userManager.RemoveFromRolesAsync(superAdmin, currentRoles);
+                }
+
+                var assignResult = await userManager.AddToRoleAsync(superAdmin, targetRole);
+                if (!assignResult.Succeeded)
+                {
+                    var errs = string.Join(", ", assignResult.Errors.Select(e => e.Description));
+                    throw new InvalidOperationException($"Failed to assign {targetRole} to superadmin: {errs}");
                 }
             }
 

@@ -1,5 +1,6 @@
 ﻿using FitZone.Application.DTOs.Auth;
 using FitZone.Application.Interfaces;
+using FitZone.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,22 +15,6 @@ namespace FitZone.API.Controllers
         public AuthController(IAuthService authService)
         {
             _authService = authService;
-        }
-
-        /// <summary>
-        /// Registers a new user account in the system.
-        /// </summary>
-        /// <param name="dto">User registration details including username, email, and password.</param>
-        /// <returns>The registered user's profile and an initial JWT token.</returns>
-        /// <response code="200">User registered successfully.</response>
-        /// <response code="400">Validation error, duplicate username/email, or weak password.</response>
-        [HttpPost("register")]
-        [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto dto)
-        {
-            var response = await _authService.RegisterAsync(dto);
-            return Ok(response);
         }
 
         /// <summary>
@@ -49,17 +34,35 @@ namespace FitZone.API.Controllers
         }
 
         /// <summary>
-        /// Assigns a specific role to a user (Admin and SuperAdmin only).
+        /// Registers a new user account in the system.
+        /// </summary>
+        /// <param name="dto">User registration details including username, email, and password.</param>
+        /// <returns>The registered user's profile and an initial JWT token.</returns>
+        /// <response code="200">User registered successfully.</response>
+        /// <response code="400">Validation error, duplicate username/email, or weak password.</response>
+        [HttpPost("register")]
+        [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto dto)
+        {
+            var response = await _authService.RegisterAsync(dto);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Assigns a specific role to a user.
+        /// Admins can assign Member or Trainer roles.
+        /// Only superAdmins can assign Admin or superAdmin roles.
         /// </summary>
         /// <param name="dto">Details containing the target user ID and the role to assign.</param>
         /// <returns>A confirmation message if the role assignment was successful.</returns>
         /// <response code="200">Role assigned successfully.</response>
         /// <response code="400">Invalid role assignment operation.</response>
         /// <response code="401">Unauthorized - valid JWT token is missing or expired.</response>
-        /// <response code="403">Forbidden - requires Admin or SuperAdmin role privileges.</response>
+        /// <response code="403">Forbidden - insufficient role hierarchy permissions.</response>
         /// <response code="404">If the specified user is not found.</response>
         [HttpPost("assign-role")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -67,6 +70,16 @@ namespace FitZone.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto dto)
         {
+            var isSuperAdmin = User.IsInRole("superAdmin");
+
+            if (!isSuperAdmin && (dto.Role == Role.Admin || dto.Role == Role.superAdmin))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    message = "Access denied: Only SuperAdmin can assign Admin or superAdmin roles."
+                });
+            }
+
             try
             {
                 await _authService.AssignRoleAsync(dto);
