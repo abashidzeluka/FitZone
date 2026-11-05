@@ -1,35 +1,45 @@
 ﻿using FitZone.Application.DTOs.Members;
 using FitZone.Application.Interfaces;
 using FitZone.Domain.Entities;
-using FitZone.Domain.Enums;
 using FitZone.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FitZone.Application.Services
 {
     public class MemberService : IMemberService
     {
         private readonly FitZoneDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public MemberService(FitZoneDbContext context)
+        public MemberService(FitZoneDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<IEnumerable<MemberDto>> GetAllAsync()
         {
             var users = await _context.Users.ToListAsync();
+            var memberDtos = new List<MemberDto>();
 
-            return users.Select(u => new MemberDto
+            foreach (var user in users)
             {
-                Id = u.Id,
-                UserName = u.UserName ?? string.Empty,
-                Email = u.Email ?? string.Empty,
-                Role = "Member"
-            });
+                var roles = await _userManager.GetRolesAsync(user);
+
+                memberDtos.Add(new MemberDto
+                {
+                    Id = user.Id,
+                    UserName = user.UserName ?? string.Empty,
+                    Email = user.Email ?? string.Empty,
+                    Roles = roles.ToList()
+                });
+            }
+
+            return memberDtos;
         }
 
         public async Task<MemberDto?> GetByIdAsync(int id)
@@ -41,14 +51,17 @@ namespace FitZone.Application.Services
                 return null;
             }
 
+            var roles = await _userManager.GetRolesAsync(user);
+
             return new MemberDto
             {
                 Id = user.Id,
                 UserName = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
-                Role = "Member"
+                Roles = roles.ToList()
             };
         }
+
         public async Task<MemberDto> CreateAsync(CreateMemberDto dto)
         {
             var user = new ApplicationUser
@@ -57,15 +70,15 @@ namespace FitZone.Application.Services
                 Email = dto.Email
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _userManager.CreateAsync(user);
+            await _userManager.AddToRoleAsync(user, "Member");
 
             return new MemberDto
             {
                 Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
-                Role = "Member"
+                Roles = new List<string> { "Member" }
             };
         }
 
@@ -78,11 +91,8 @@ namespace FitZone.Application.Services
                 return false;
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return true;
+            var result = await _userManager.DeleteAsync(user);
+            return result.Succeeded;
         }
-
     }
 }

@@ -60,6 +60,7 @@ namespace FitZone.API
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ITrainerService, TrainerService>();
             builder.Services.AddScoped<ITrainingSessionService, TrainingSessionService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
 
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>

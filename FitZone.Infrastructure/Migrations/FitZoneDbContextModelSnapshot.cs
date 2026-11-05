@@ -195,11 +195,19 @@ namespace FitZone.Infrastructure.Migrations
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("EndsAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("StartsAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TrainerId")
                         .HasColumnType("int");

@@ -61,7 +61,7 @@ namespace FitZone.API.Controllers
         /// <response code="401">Unauthorized - valid JWT token is missing or expired.</response>
         /// <response code="403">Forbidden - requires Admin role privileges.</response>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(typeof(MembershipPlanDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -82,7 +82,7 @@ namespace FitZone.API.Controllers
         /// <response code="403">Forbidden - requires Admin role privileges.</response>
         /// <response code="404">If the membership plan is not found.</response>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
