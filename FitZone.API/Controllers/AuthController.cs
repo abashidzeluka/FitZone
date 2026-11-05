@@ -121,7 +121,6 @@ namespace FitZone.API.Controllers
         {
             var isSuperAdmin = User.IsInRole("superAdmin");
 
-            // Regular Admins are only allowed to remove the Trainer role
             if (!isSuperAdmin && role != Role.Trainer)
             {
                 return StatusCode(StatusCodes.Status403Forbidden, new
