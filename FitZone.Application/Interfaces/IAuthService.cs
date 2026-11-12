@@ -8,4 +8,6 @@ public interface IAuthService
     Task<AuthResponseDto> LoginAsync(LoginDto dto);
     Task<bool> AssignRoleAsync(AssignRoleDto dto);
     Task<bool> RemoveRoleAsync(RemoveRoleDto dto);
+    Task<AuthResponseDto> UpdateUsernameAsync(int userId, UpdateUsernameDto dto);
+    Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto dto);
 }

@@ -39,7 +39,7 @@ namespace FitZone.Application.Services
 
             var userMembership = new UserMembership
             {
-                UserId = dto.UserId,
+                UserId = dto.UserId!.Value,
                 PlanId = dto.PlanId,
                 StartDate = startDate,
                 EndDate = endDate,

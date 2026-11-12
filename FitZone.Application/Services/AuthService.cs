@@ -1,12 +1,18 @@
 ﻿using FitZone.Application.DTOs.Auth;
 using FitZone.Application.Interfaces;
 using FitZone.Domain.Entities;
+using FitZone.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace FitZone.Application.Services;
 
@@ -15,15 +21,18 @@ public class AuthService : IAuthService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole<int>> _roleManager;
     private readonly IConfiguration _configuration;
+    private readonly FitZoneDbContext _context;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole<int>> roleManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        FitZoneDbContext context)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _configuration = configuration;
+        _context = context;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -68,8 +77,8 @@ public class AuthService : IAuthService
         return new AuthResponseDto
         {
             UserId = user.Id,
-            UserName = user.UserName,
-            Email = user.Email,
+            UserName = user.UserName ?? string.Empty,
+            Email = user.Email ?? string.Empty,
             Token = token,
             Roles = roles
         };
@@ -106,17 +115,43 @@ public class AuthService : IAuthService
 
         var roleName = dto.Role.ToString();
 
-        var isInRole = await _userManager.IsInRoleAsync(user, roleName);
-        if (isInRole)
+        if (!await _roleManager.RoleExistsAsync(roleName))
         {
-            return true;
+            await _roleManager.CreateAsync(new IdentityRole<int>(roleName));
         }
 
-        var result = await _userManager.AddToRoleAsync(user, roleName);
-        if (!result.Succeeded)
+        var isInRole = await _userManager.IsInRoleAsync(user, roleName);
+        if (!isInRole)
         {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Failed to assign role: {errors}");
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to assign role: {errors}");
+            }
+        }
+
+        if (roleName.Equals("Trainer", StringComparison.OrdinalIgnoreCase))
+        {
+            var trainerExists = await _context.Trainers.AnyAsync(t => t.UserId == user.Id);
+            if (!trainerExists)
+            {
+                var fullName = $"{user.FirstName} {user.LastName}".Trim();
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    fullName = user.UserName ?? "Trainer";
+                }
+
+                var trainer = new Trainer
+                {
+                    UserId = user.Id,
+                    FullName = fullName,
+                    Specialization = "General Fitness"
+                };
+
+                _context.Trainers.Add(trainer);
+                await _context.SaveChangesAsync();
+            }
         }
 
         return true;
@@ -139,7 +174,80 @@ public class AuthService : IAuthService
         }
 
         var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+
+        if (result.Succeeded && roleName.Equals("Trainer", StringComparison.OrdinalIgnoreCase))
+        {
+            var trainer = await _context.Trainers
+                .Include(t => t.TrainingSessions)
+                .FirstOrDefaultAsync(t => t.UserId == user.Id);
+
+            if (trainer != null && !trainer.TrainingSessions.Any())
+            {
+                _context.Trainers.Remove(trainer);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         return result.Succeeded;
+    }
+
+    public async Task<AuthResponseDto> UpdateUsernameAsync(int userId, UpdateUsernameDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
+
+        var newUserName = dto.NewUserName.Trim();
+        if (string.Equals(user.UserName, newUserName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("New username must be different from the current username.");
+        }
+
+        var existingUser = await _userManager.FindByNameAsync(newUserName);
+        if (existingUser != null)
+        {
+            throw new InvalidOperationException($"Username '{newUserName}' is already taken.");
+        }
+
+        var result = await _userManager.SetUserNameAsync(user, newUserName);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to update username: {errors}");
+        }
+
+        // ვაგენერირებთ ახალ ტოკენს, რადგან ძველ ტოკენში ძველი UserName წერია
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = GenerateJwtToken(user, roles);
+
+        return new AuthResponseDto
+        {
+            UserId = user.Id,
+            UserName = user.UserName ?? string.Empty,
+            Email = user.Email ?? string.Empty,
+            Token = token,
+            Roles = roles
+        };
+    }
+
+    public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to change password: {errors}");
+        }
+
+        return true;
     }
 
     private string GenerateJwtToken(ApplicationUser user, IList<string> roles)

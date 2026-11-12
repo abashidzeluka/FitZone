@@ -179,7 +179,12 @@ namespace FitZone.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Trainers");
                 });
@@ -425,6 +430,15 @@ namespace FitZone.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("TrainingSession");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FitZone.Domain.Entities.Trainer", b =>
+                {
+                    b.HasOne("FitZone.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });

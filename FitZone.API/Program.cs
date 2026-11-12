@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
+using FitZone.API.Middleware;
 
 namespace FitZone.API
 {
@@ -96,6 +97,8 @@ namespace FitZone.API
 
             var app = builder.Build();
 
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
+
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
@@ -169,3 +172,4 @@ namespace FitZone.API
         }
     }
 }
+public partial class Program { }

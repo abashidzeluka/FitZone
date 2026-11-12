@@ -1,6 +1,10 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Project Path="FitZone.API/FitZone.API.csproj" />
   <Project Path="FitZone.Application/FitZone.Application.csproj" />
   <Project Path="FitZone.Domain/FitZone.Domain.csproj" />
   <Project Path="FitZone.Infrastructure/FitZone.Infrastructure.csproj" />
+  <Project Path="FitZone.Tests/FitZone.Tests.csproj" Id="54c59079-66f4-460d-af41-05c400ce2aee" />
 </Solution>

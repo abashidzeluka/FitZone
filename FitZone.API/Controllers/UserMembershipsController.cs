@@ -3,9 +3,7 @@ using FitZone.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace FitZone.API.Controllers
 {
@@ -22,38 +20,34 @@ namespace FitZone.API.Controllers
             _service = service;
         }
 
-        /// <summary>
-        /// Purchases and creates a new membership for a user (Admin and superAdmin only).
-        /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(typeof(UserMembershipDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Create([FromBody] CreateUserMembershipDto dto)
         {
-            try
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                var result = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+                return Unauthorized();
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+
+            var isAdmin = User.IsInRole("Admin") || User.IsInRole("superAdmin");
+
+            dto.UserId = isAdmin && dto.UserId.HasValue && dto.UserId.Value > 0
+                ? dto.UserId.Value
+                : currentUserId;
+
+            var result = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
-        /// <summary>
-        /// Retrieves a specific user membership by its unique identifier.
-        /// </summary>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserMembershipDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
-
             if (result == null)
             {
                 return NotFound();
@@ -62,9 +56,6 @@ namespace FitZone.API.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Retrieves all memberships associated with a specific user.
-        /// </summary>
         [HttpGet("user/{userId}")]
         [ProducesResponseType(typeof(IEnumerable<UserMembershipDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -82,9 +73,6 @@ namespace FitZone.API.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Cancels an active user membership by setting its expiration to the current time (Admin and superAdmin only).
-        /// </summary>
         [HttpPatch("{id}/cancel")]
         [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -93,7 +81,6 @@ namespace FitZone.API.Controllers
         public async Task<IActionResult> Cancel(int id)
         {
             var success = await _service.CancelAsync(id);
-
             if (!success)
             {
                 return NotFound();
