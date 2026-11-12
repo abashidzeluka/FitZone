@@ -12,7 +12,7 @@ FitZone is a backend RESTful Web API built with ASP.NET Core and Clean Architect
 
 ## Architecture
 
-The solution is organized into four distinct layers following Clean Architecture:
+The solution is organized into distinct layers following Clean Architecture:
 
 - **`FitZone.Domain`**: Core entities (`ApplicationUser`, `Trainer`, `MembershipPlan`, `UserMembership`, `TrainingSession`, `Booking`, `Visit`) and domain enums (`Role`, `BookingStatus`).
 - **`FitZone.Application`**: Business logic services, DTOs, and validation rules.
@@ -63,5 +63,39 @@ The solution is organized into four distinct layers following Clean Architecture
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/your-username/FitZone.git](https://github.com/your-username/FitZone.git)
+   git clone https://github.com/your-username/FitZone.git
    cd FitZone
+   ```
+
+2. **Configure `appsettings.json` in `FitZone.API`:**
+   Update the SQL Server connection string and JWT settings:
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Server=.;Database=FitZoneDb;Trusted_Connection=True;TrustServerCertificate=True;"
+     },
+     "Jwt": {
+       "Key": "YourSuperSecretKeyAtLeast32CharactersLong",
+       "Issuer": "FitZoneAPI",
+       "Audience": "FitZoneUsers"
+     }
+   }
+   ```
+
+3. **Apply database migrations:**
+   ```bash
+   dotnet ef database update --project FitZone.Infrastructure --startup-project FitZone.API
+   ```
+
+4. **Run the API:**
+   ```bash
+   dotnet run --project FitZone.API
+   ```
+   Open `https://localhost:<port>/swagger` to explore and test the endpoints.
+
+## Running Tests
+
+Execute the automated test suite (20 Unit, Database, and Integration tests):
+```bash
+dotnet test
+```
