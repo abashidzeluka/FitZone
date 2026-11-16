@@ -1,3 +1,4 @@
+using FitZone.API.Middleware;
 using FitZone.Application.Interfaces;
 using FitZone.Application.Services;
 using FitZone.Domain.Entities;
@@ -8,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
-using FitZone.API.Middleware;
 
 namespace FitZone.API
 {
@@ -17,6 +17,16 @@ namespace FitZone.API
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngular", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
 
             builder.Services.AddDbContext<FitZoneDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -97,62 +107,11 @@ namespace FitZone.API
 
             var app = builder.Build();
 
+            app.UseCors("AllowAngular");
+
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-            using (var scope = app.Services.CreateScope())
-            {
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-                var roleNames = Enum.GetNames<FitZone.Domain.Enums.Role>();
-                foreach (var role in roleNames)
-                {
-                    if (!await roleManager.RoleExistsAsync(role))
-                    {
-                        await roleManager.CreateAsync(new IdentityRole<int>(role));
-                    }
-                }
-
-                const string superAdminEmail = "superadmin@fitzone.ge";
-                const string superAdminUsername = "superadmin";
-                var targetRole = FitZone.Domain.Enums.Role.superAdmin.ToString();
-
-                var superAdmin = await userManager.FindByNameAsync(superAdminUsername)
-                                 ?? await userManager.FindByEmailAsync(superAdminEmail);
-
-                if (superAdmin == null)
-                {
-                    superAdmin = new ApplicationUser
-                    {
-                        UserName = superAdminUsername,
-                        Email = superAdminEmail,
-                        FirstName = "Super",
-                        LastName = "Admin",
-                        DateOfBirth = new DateTime(2000, 1, 1),
-                        EmailConfirmed = true
-                    };
-
-                    var createResult = await userManager.CreateAsync(superAdmin, "Admin123");
-                    if (!createResult.Succeeded)
-                    {
-                        var errs = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                        throw new InvalidOperationException($"Failed to create superadmin: {errs}");
-                    }
-                }
-
-                var currentRoles = await userManager.GetRolesAsync(superAdmin);
-                if (currentRoles.Any())
-                {
-                    await userManager.RemoveFromRolesAsync(superAdmin, currentRoles);
-                }
-
-                var assignResult = await userManager.AddToRoleAsync(superAdmin, targetRole);
-                if (!assignResult.Succeeded)
-                {
-                    var errs = string.Join(", ", assignResult.Errors.Select(e => e.Description));
-                    throw new InvalidOperationException($"Failed to assign {targetRole} to superadmin: {errs}");
-                }
-            }
+            await DbInitializer.SeedAsync(app.Services);
 
             if (app.Environment.IsDevelopment())
             {

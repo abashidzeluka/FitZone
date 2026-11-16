@@ -1,0 +1,17 @@
+body {
+  background-color: #121212;
+  color: #ffffff;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.bg-card {
+  background-color: #1a1a1a !important;
+  border: 1px solid #2c2c2c !important;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: #121212;
+  color: #ffffff;
+  border-color: #ffc107;
+  box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+}

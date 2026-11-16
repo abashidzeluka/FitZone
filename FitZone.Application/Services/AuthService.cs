@@ -86,10 +86,14 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
     {
-        var user = await _userManager.FindByNameAsync(dto.UserName);
+        var identifier = dto.UserName.Trim();
+
+        var user = await _userManager.FindByNameAsync(identifier)
+                   ?? await _userManager.FindByEmailAsync(identifier);
+
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
         {
-            throw new UnauthorizedAccessException("Invalid username or password.");
+            throw new UnauthorizedAccessException("Invalid username/email or password.");
         }
 
         var roles = await _userManager.GetRolesAsync(user);
@@ -218,7 +222,6 @@ public class AuthService : IAuthService
             throw new InvalidOperationException($"Failed to update username: {errors}");
         }
 
-        // ვაგენერირებთ ახალ ტოკენს, რადგან ძველ ტოკენში ძველი UserName წერია
         var roles = await _userManager.GetRolesAsync(user);
         var token = GenerateJwtToken(user, roles);
 
