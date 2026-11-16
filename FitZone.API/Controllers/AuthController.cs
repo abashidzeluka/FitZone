@@ -18,6 +18,11 @@ namespace FitZone.API.Controllers
             _authService = authService;
         }
 
+        /// <summary>
+        /// Authenticates a user and returns a JWT bearer token.
+        /// </summary>
+        /// <param name="dto">User login credentials (username/email and password).</param>
+        /// <returns>Authentication response containing the JWT token and user details.</returns>
         [HttpPost("login")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -27,6 +32,11 @@ namespace FitZone.API.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Registers a new member account and returns an authentication token.
+        /// </summary>
+        /// <param name="dto">New user registration details.</param>
+        /// <returns>Authentication response containing the JWT token and created user details.</returns>
         [HttpPost("register")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -36,6 +46,11 @@ namespace FitZone.API.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Updates the authenticated user's username and issues a refreshed JWT token.
+        /// </summary>
+        /// <param name="dto">New username details.</param>
+        /// <returns>Updated authentication response with a new JWT token.</returns>
         [HttpPut("update-username")]
         [Authorize]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
@@ -53,6 +68,11 @@ namespace FitZone.API.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Changes the password for the currently authenticated user.
+        /// </summary>
+        /// <param name="dto">Current and new password details.</param>
+        /// <returns>Confirmation message upon successful password change.</returns>
         [HttpPost("change-password")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -70,6 +90,12 @@ namespace FitZone.API.Controllers
             return Ok(new { message = "Password changed successfully." });
         }
 
+        /// <summary>
+        /// Assigns a specified role to a user. Only superAdmin can assign Admin or superAdmin roles.
+        /// </summary>
+        /// <param name="userId">Target user ID.</param>
+        /// <param name="role">Role to assign.</param>
+        /// <returns>Confirmation message upon successful role assignment.</returns>
         [HttpPost("assign-role/{userId}/{role}")]
         [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -94,6 +120,12 @@ namespace FitZone.API.Controllers
             return Ok(new { message = $"Role '{role}' assigned successfully to user ID {userId}." });
         }
 
+        /// <summary>
+        /// Removes a specified role from a user. Admins can only remove the Trainer role.
+        /// </summary>
+        /// <param name="userId">Target user ID.</param>
+        /// <param name="role">Role to remove.</param>
+        /// <returns>Confirmation message upon successful role removal.</returns>
         [HttpDelete("remove-role/{userId}/{role}")]
         [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]

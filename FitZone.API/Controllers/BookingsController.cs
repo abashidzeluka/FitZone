@@ -18,6 +18,11 @@ namespace FitZone.API.Controllers
             _bookingService = bookingService;
         }
 
+        /// <summary>
+        /// Books a training session for the currently authenticated user.
+        /// </summary>
+        /// <param name="dto">Training session booking details.</param>
+        /// <returns>The created booking ID and confirmation message.</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -34,6 +39,11 @@ namespace FitZone.API.Controllers
             return Ok(new { bookingId, message = "Session booked successfully." });
         }
 
+        /// <summary>
+        /// Cancels an existing booking if the user is the booking owner or an administrator.
+        /// </summary>
+        /// <param name="id">Target booking ID.</param>
+        /// <returns>Confirmation message upon successful cancellation.</returns>
         [HttpPatch("{id}/cancel")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -54,6 +64,10 @@ namespace FitZone.API.Controllers
             return Ok(new { message = "Booking cancelled successfully." });
         }
 
+        /// <summary>
+        /// Retrieves all bookings belonging to the currently authenticated user.
+        /// </summary>
+        /// <returns>A list of the user's bookings.</returns>
         [HttpGet("my")]
         [ProducesResponseType(typeof(IEnumerable<UserBookingDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -69,6 +83,10 @@ namespace FitZone.API.Controllers
             return Ok(bookings);
         }
 
+        /// <summary>
+        /// Retrieves all bookings across the system (restricted to Admin, superAdmin, and Trainer roles).
+        /// </summary>
+        /// <returns>A list of all bookings.</returns>
         [HttpGet]
         [Authorize(Roles = "Admin,superAdmin,Trainer")]
         [ProducesResponseType(typeof(IEnumerable<UserBookingDto>), StatusCodes.Status200OK)]

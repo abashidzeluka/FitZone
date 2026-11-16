@@ -20,6 +20,11 @@ namespace FitZone.API.Controllers
             _service = service;
         }
 
+        /// <summary>
+        /// Activates a new membership plan for the authenticated user (or a specified user if requested by an administrator).
+        /// </summary>
+        /// <param name="dto">User membership creation details.</param>
+        /// <returns>The created user membership details.</returns>
         [HttpPost]
         [ProducesResponseType(typeof(UserMembershipDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -42,6 +47,11 @@ namespace FitZone.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
+        /// <summary>
+        /// Retrieves a specific user membership record by its unique identifier.
+        /// </summary>
+        /// <param name="id">User membership ID.</param>
+        /// <returns>The matching user membership details.</returns>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserMembershipDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -56,6 +66,11 @@ namespace FitZone.API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Retrieves all memberships belonging to a specific user (restricted to the account owner or an administrator).
+        /// </summary>
+        /// <param name="userId">Target user ID.</param>
+        /// <returns>A list of the user's memberships.</returns>
         [HttpGet("user/{userId}")]
         [ProducesResponseType(typeof(IEnumerable<UserMembershipDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -73,6 +88,11 @@ namespace FitZone.API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Cancels an active user membership (restricted to Admin and superAdmin roles).
+        /// </summary>
+        /// <param name="id">Target user membership ID.</param>
+        /// <returns>No content upon successful cancellation.</returns>
         [HttpPatch("{id}/cancel")]
         [Authorize(Roles = "Admin,superAdmin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
