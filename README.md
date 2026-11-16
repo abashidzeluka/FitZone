@@ -65,7 +65,7 @@ The solution is organized into distinct layers following Clean Architecture:
 ## Getting Started
 
 1. **Clone the repository:**
-   git clone https://github.com/your-username/FitZone.git
+   git clone https://github.com/abashidzeluka/FitZone
    cd FitZone
 
 2. **Configure `appsettings.json` in `FitZone.API`:**
