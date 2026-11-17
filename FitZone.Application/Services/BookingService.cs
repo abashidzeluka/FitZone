@@ -30,15 +30,21 @@ namespace FitZone.Application.Services
                 throw new InvalidOperationException("Session not found or has already started.");
             }
 
-            var hasActiveMembership = await _context.UserMemberships
-                .AnyAsync(m => m.UserId == userId && m.EndDate >= DateTime.UtcNow);
+            var activeMembership = await _context.UserMemberships
+                .Where(m => m.UserId == userId
+                         && m.EndDate >= DateTime.UtcNow
+                         && (m.RemainingVisits == null || m.RemainingVisits > 0))
+                .OrderBy(m => m.EndDate)
+                .FirstOrDefaultAsync();
 
-            if (!hasActiveMembership)
+            if (activeMembership == null)
             {
-                throw new InvalidOperationException("Active membership required to book a session.");
+                throw new InvalidOperationException("Active membership with available visits is required to book a session.");
             }
 
-            if (session.Bookings.Any(b => b.UserId == userId && b.Status == BookingStatus.Confirmed))
+            var existingBooking = session.Bookings.FirstOrDefault(b => b.UserId == userId);
+
+            if (existingBooking != null && existingBooking.Status == BookingStatus.Confirmed)
             {
                 throw new InvalidOperationException("You have already booked this session.");
             }
@@ -46,6 +52,18 @@ namespace FitZone.Application.Services
             if (session.Bookings.Count(b => b.Status == BookingStatus.Confirmed) >= session.Capacity)
             {
                 throw new InvalidOperationException("Session is fully booked.");
+            }
+
+            if (activeMembership.RemainingVisits.HasValue)
+            {
+                activeMembership.RemainingVisits -= 1;
+            }
+
+            if (existingBooking != null && existingBooking.Status == BookingStatus.Cancelled)
+            {
+                existingBooking.Status = BookingStatus.Confirmed;
+                await _context.SaveChangesAsync();
+                return existingBooking.Id;
             }
 
             var booking = new Domain.Entities.Booking
@@ -88,6 +106,19 @@ namespace FitZone.Application.Services
             }
 
             booking.Status = BookingStatus.Cancelled;
+
+            var activeMembership = await _context.UserMemberships
+                .Where(m => m.UserId == booking.UserId
+                         && m.EndDate >= DateTime.UtcNow
+                         && m.RemainingVisits != null)
+                .OrderBy(m => m.EndDate)
+                .FirstOrDefaultAsync();
+
+            if (activeMembership != null)
+            {
+                activeMembership.RemainingVisits += 1;
+            }
+
             await _context.SaveChangesAsync();
         }
 

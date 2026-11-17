@@ -1,9 +1,11 @@
 ﻿using FitZone.Application.DTOs.Members;
 using FitZone.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FitZone.API.Controllers
 {
+    [Authorize(Roles = "Admin,superAdmin")]
     [ApiController]
     [Route("api/[controller]")]
     public class MembersController : ControllerBase

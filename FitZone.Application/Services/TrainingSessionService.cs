@@ -1,6 +1,7 @@
 ﻿using FitZone.Application.DTOs.TrainingSessions;
 using FitZone.Application.Interfaces;
 using FitZone.Domain.Entities;
+using FitZone.Domain.Enums;
 using FitZone.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -34,7 +35,7 @@ namespace FitZone.Application.Services
                     StartsAt = s.StartsAt,
                     EndsAt = s.EndsAt,
                     Capacity = s.Capacity,
-                    AvailableSpots = s.Capacity - s.Bookings.Count
+                    AvailableSpots = s.Capacity - s.Bookings.Count(b => b.Status == BookingStatus.Confirmed)
                 })
                 .ToListAsync();
         }
